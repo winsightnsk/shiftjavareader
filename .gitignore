@@ -41,6 +41,8 @@ bin/
 
 ### Mac OS ###
 .DS_Store
-info.txt
-.gradle
+
+### My ###
 .idea
+_nogit_.txt
+/src/test/resources/_nogit_*
