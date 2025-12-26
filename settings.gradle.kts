@@ -1,1 +1,1 @@
-rootProject.name = "shiftjava"
+rootProject.name = "ShiftJavaReader"
