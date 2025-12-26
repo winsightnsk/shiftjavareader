@@ -44,5 +44,4 @@ bin/
 
 ### My ###
 .idea
-_nogit_.txt
-/src/test/resources/_nogit_*
+_nogit_*

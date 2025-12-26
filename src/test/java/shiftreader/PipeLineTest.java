@@ -2,7 +2,8 @@ package shiftreader;
 
 import org.junit.jupiter.api.Test;
 
-import java.nio.file.Path;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -36,7 +37,6 @@ class PipeLineTest {
         PipeLine pl = new PipeLine(args);
         assertEquals(pathdefault, pl.getFullpath());
         assertEquals("", pl.getPrefix());
-        assertEquals(pathdefault, pl.getFullpath());
         assertTrue(pl.isAppend());
         assertTrue(pl.isFull());
         assertEquals(1, pl.getFiles().size());
@@ -47,7 +47,6 @@ class PipeLineTest {
         PipeLine pl = new PipeLine(args);
         assertEquals(pathdefault, pl.getFullpath());
         assertEquals("", pl.getPrefix());
-        assertEquals(pathdefault, pl.getFullpath());
         assertTrue(pl.isAppend());
         assertTrue(pl.isFull());
         assertEquals(0, pl.getFiles().size());
@@ -58,10 +57,72 @@ class PipeLineTest {
         PipeLine pl = new PipeLine(args);
         assertEquals(pathdefault, pl.getFullpath());
         assertEquals("", pl.getPrefix());
-        assertEquals(pathdefault, pl.getFullpath());
         assertFalse(pl.isAppend());
         assertFalse(pl.isFull());
         assertEquals(0, pl.getFiles().size());
     }
+    @Test
+    public void testDropRightNol() throws Exception {
+        Method method = PipeLine.class.getDeclaredMethod("dropRightNol", String.class);
+        method.setAccessible(true);
+        assertEquals(".123", method.invoke(null,".123"));
+        assertEquals(".0", method.invoke(null,"."));
+        assertEquals(".0123", method.invoke(null,".01230"));
+        assertEquals(".123", method.invoke(null,".123000"));
+        assertEquals(".1230001", method.invoke(null,".123000100"));
+        assertEquals("0123", method.invoke(null,"01230"));
+        assertEquals("", method.invoke(null,"0000"));
+        assertEquals("", method.invoke(null,""));
+    }
+    @Test
+    public void testDropLeftNol() throws Exception {
+        Method method = PipeLine.class.getDeclaredMethod("dropLeftNol", String.class);
+        method.setAccessible(true);
+        assertEquals("0", method.invoke(null, "0"));
+        assertEquals("", method.invoke(null,""));
+        assertEquals("+1", method.invoke(null,"+1"));
+        assertEquals("1", method.invoke(null,"1"));
+        assertEquals("1", method.invoke(null,"01"));
+        assertEquals("1", method.invoke(null,"001"));
+        assertEquals("100010", method.invoke(null,"0100010"));
+        assertEquals("-100010", method.invoke(null,"-0100010"));
+        assertEquals("+100010", method.invoke(null,"+0100010"));
+        assertEquals("-1", method.invoke(null,"-0000000000000000000000000001"));
+    }
+    @Test
+    public void testIsFloat() throws Exception {
+        Method method = PipeLine.class.getDeclaredMethod("isFloat", String.class);
+        method.setAccessible(true);
+        assertTrue((Boolean) method.invoke(null,"00"));
+        assertTrue((Boolean) method.invoke(null,"-001."));
+        assertTrue((Boolean) method.invoke(null,".001"));
+        assertTrue((Boolean) method.invoke(null,".001e1"));
+        assertTrue((Boolean) method.invoke(null,"0.e1"));
+        assertTrue((Boolean) method.invoke(null,"+0.e1"));
+        assertTrue((Boolean) method.invoke(null,"100e12"));
+        assertTrue((Boolean) method.invoke(null,"001e+12"));
+        assertTrue((Boolean) method.invoke(null,"020e-02"));
+        assertFalse((Boolean) method.invoke(null,"e100"));
+        assertFalse((Boolean) method.invoke(null,"-e100"));
+        assertFalse((Boolean) method.invoke(null,".e10"));
+        assertFalse((Boolean) method.invoke(null,"-.e01"));
+    }
+//    @Test
+//    public void test00005() {
+//        String[] args = {"-p", "_nogit_", "src/test/resources/in1.txt", "src/test/resources/in2.txt"};
+//        PipeLine pl = new PipeLine(args);
+//        assertEquals("_nogit_", pl.getPrefix());
+//        assertEquals(pathdefault, pl.getFullpath());
+//        assertFalse(pl.isAppend());
+//        assertFalse(pl.isFull());
+//        assertEquals(2, pl.getFiles().size());
+//
+//        Lorem ipsum dolor sit amet
+//        Пример
+//        consectetur adipiscing
+//        тестовое задание
+//        Нормальная форма числа с плавающей запятой
+//        Long
+//    }
 
 }

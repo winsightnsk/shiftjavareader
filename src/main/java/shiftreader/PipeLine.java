@@ -1,11 +1,19 @@
 package shiftreader;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public final class PipeLine {
 
@@ -40,11 +48,17 @@ public final class PipeLine {
             }
             addFile(args[i]);
         }
-        if (validateParams()) readFiles();
+        if (!this.files.isEmpty())
+            for (String file : files) try (Scanner sf = new Scanner(new File(file))) {
+                readFile(sf);
+            } catch (Exception e) {
+                System.err.print(e.getMessage());
+            }
     }
 
     void addFile(String filename) {
-        for (Character ch : List.of('<','>',':','\\','"','/','|','?','*')) {
+        //TODO win - linux??
+        for (Character ch : List.of('<','>',':','\\','"','|','?','*')) {
             if (filename.indexOf(ch) != -1) {
                 System.err.println("Имя файла содержит недопустимый символ '" + ch + "'");
                 return;
@@ -105,12 +119,91 @@ public final class PipeLine {
         return false;
     }
 
-    private boolean validateParams() {
-        return true;
+    private void readFile(Scanner sf) {
+        while (sf.hasNextLine()) {
+            String line = sf.nextLine().trim();
+            if (line.isEmpty()) continue;
+            if (isInteger(line)) {
+                addInteger(line);
+            } else if (isFloat(line)) {
+                addFloat(line);
+            } else addString(line);
+        }
+    }
+    private static boolean isInteger(String line) {
+        final Pattern INTEGER = Pattern.compile("^[+-]?\\d+$");
+        return (INTEGER.matcher(line).matches());
     }
 
-    private void readFiles() {
+    /** Результат может содержать целое число. Игнорируем осознанно
+     * т.к. метод приватный и принимается в чтении первым целочисленное значение */
+    private static boolean isFloat(String line) {
+        final Pattern FLOAT = Pattern.compile("^[+-]?(?:\\d+[.,]\\d*|\\d*[.,]\\d+|\\d+)(?:[eE][+-]?\\d+)?$");
+        return (FLOAT.matcher(line).matches());
+    }
+    private void addInteger(String line) {
+        if (Pattern.compile("^[+-]0+$").matcher(line).matches()) line = String.valueOf(line.charAt(0) + '0');
+        if (Pattern.compile("^0+$").matcher(line).matches()) line = "0";
+        if (Pattern.compile("^[+-]?0+\\d+$").matcher(line).matches()) line = dropLeftNol(line);
+        Path resFile = Paths.get(fullpath, prefix + "integers.txt");
+        try (FileWriter writer = new FileWriter(resFile.toAbsolutePath().toString(), true)) {
+            writer.write(line + "\n");
+        } catch (IOException e) {
+            System.err.print(e.getMessage());
+        }
+    }
+    private void addFloat(String line) {
+        line = line.replace(',', '.');
+        if (Pattern.compile("^[+-]?0*\\.?0*(?:[eE][+-]?\\d+)?$").matcher(line).matches()) line = "0.0";
+        // Паттерн для захвата и преобразования за один проход
+        Pattern pattern = Pattern.compile(
+                "^([+-]?)(\\d*)?(\\.\\d*)?(?:([eE][+-]?)(\\d+))?$"
+        );
 
+        Matcher matcher = pattern.matcher(line);
+        String sb = matcher.matches() ? (matcher.group(1) == null ? "" : matcher.group(1)) +
+                (matcher.group(2) == null ? "" : dropLeftNol(matcher.group(2))) +
+                (matcher.group(3) == null ? "" : dropRightNol(matcher.group(3))) +
+                (matcher.group(4) == null ? "" : matcher.group(4)) +
+                (matcher.group(5) == null ? "" : dropLeftNol(matcher.group(5))) : line;
+
+        Path resFile = Paths.get(fullpath, prefix + "floats.txt");
+        try (FileWriter writer = new FileWriter(resFile.toAbsolutePath().toString(), true)) {
+            writer.write(line + "\n");
+        } catch (IOException e) {
+            System.err.print(e.getMessage());
+        }
+    }
+    private void addString(String line) {
+        Path resFile = Paths.get(fullpath, prefix + "strings.txt");
+        try (FileWriter writer = new FileWriter(resFile.toAbsolutePath().toString(), true)) {
+            writer.write(line + "\n");
+        } catch (IOException e) {
+            System.err.print(e.getMessage());
+        }
+    }
+
+    private static String dropLeftNol(String txt) {
+        StringBuilder sb = new StringBuilder();
+        AtomicBoolean have_n = new AtomicBoolean(false);
+        txt.chars().forEach(ch -> {
+            if (ch == '-' || ch == '+' || have_n.get()) sb.append((char) ch);
+            else if (ch != '0') {
+                have_n.set(true);
+                sb.append((char) ch);
+            }
+        });
+        if (Pattern.compile("^[+-]?0+$").matcher(txt).matches()) sb.append('0');
+        return sb.toString();
+    }
+    private static String dropRightNol(String txt) {
+        int nolCount = 0;
+        for (int i=txt.length()-1; i>=0; i--) {
+            if (txt.charAt(i) != '0') break;
+            else nolCount++;
+        }
+        String result = txt.substring(0, txt.length() - nolCount);
+        return result.equals(".") ? ".0" : result;
     }
 
 }
