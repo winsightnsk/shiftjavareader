@@ -288,12 +288,6 @@ public final class PipeLine {
         return result.equals(".") ? ".0" : result;
     }
 
-//    private record Outs(String alias, List<String> list) {
-//        public Outs(String alias) {
-//            this(alias, new ArrayList<>());
-//        }
-//    }
-
     private void show_statistic() {
         for (Calc calc : List.of(calc_str, calc_int, calc_flt)) {
             System.out.println(prefix + calc);

@@ -7,10 +7,6 @@ import java.util.List;
 public class Calc {
     protected final String alias;
 
-//    public List<String> getList() {
-//        return list;
-//    }
-
     protected final List<String> list = new ArrayList<>();
 
     public Calc(String alias) {
