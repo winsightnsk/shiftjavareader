@@ -40,8 +40,9 @@ java -jar shiftjavareader.jar --help // для вывода справочной
 
 **Примеры использования:**
 
-bash
+``` bash
 java -jar shiftjavareader.jar -f -p result_ src/test/resources/in1.txt src/test/resources/in2.txt
+```
 
 **Тесты**
 
