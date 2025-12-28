@@ -23,18 +23,18 @@ public final class PipeLine {
     private boolean full = false;
     private final List<String> files = new ArrayList<>();
     private final List<Path> touchedFiles = new ArrayList<>();
-    private final Outs out_int = new Outs("integers");
-    private final Outs out_flt = new Outs("floats");
-    private final Outs out_str = new Outs("strings");
+    private final CalcInt calc_int = new CalcInt("integers");
+    private final CalcFlt calc_flt = new CalcFlt("floats");
+    private final CalcStr calc_str = new CalcStr("strings");
 
     public String getFullpath() { return fullpath; }
     public String getPrefix() { return prefix; }
     public boolean isFull() { return full; }
     public boolean isAppend() { return append; }
     public List<String> getFiles() {return Collections.unmodifiableList(files);}
-    public List<String> strings_flt() {return Collections.unmodifiableList(out_flt.list);}
-    public List<String> strings_int() {return Collections.unmodifiableList(out_int.list);}
-    public List<String> strings_str() {return Collections.unmodifiableList(out_str.list);}
+    public List<String> strings_flt() {return Collections.unmodifiableList(calc_flt.list);}
+    public List<String> strings_int() {return Collections.unmodifiableList(calc_int.list);}
+    public List<String> strings_str() {return Collections.unmodifiableList(calc_str.list);}
 
     /**
      * Конструктор класса. Выполняет работу при создании экземпляра.
@@ -65,16 +65,17 @@ public final class PipeLine {
             } catch (Exception e) {
                 System.err.print(e.getMessage());
             }
-        for (Outs o : List.of(out_flt, out_int, out_str)) {
-            if (!o.list.isEmpty()) {
-                Path resFile = Paths.get(fullpath, prefix + o.alias + ".txt");
+        for (Calc calc : List.of(calc_flt, calc_int, calc_str)) {
+            if (!calc.list.isEmpty()) {
+                Path resFile = Paths.get(fullpath, prefix + calc.alias + ".txt");
                 if (clearFile(resFile)) try (FileWriter writer = new FileWriter(resFile.toAbsolutePath().toString(), true)) {
-                    for (String line : o.list) writer.write(line + "\n");
+                    for (String line : calc.list) writer.write(line + "\n");
                 } catch (IOException e) {
                     System.err.print(e.getMessage());
                 }
             }
         }
+        show_statistic();
     }
 
     /**
@@ -221,10 +222,10 @@ public final class PipeLine {
      * @param line - формат: ^[+-]?\d+$
      */
     private void addInteger(String line) {
-        if (Pattern.compile("^[+-]0+$").matcher(line).matches()) line = String.valueOf(line.charAt(0) + '0');
+        if (Pattern.compile("^[+-]0+$").matcher(line).matches()) line = line.charAt(0) + "0";
         if (Pattern.compile("^0+$").matcher(line).matches()) line = "0";
         if (Pattern.compile("^[+-]?0+\\d+$").matcher(line).matches()) line = dropLeftNol(line);
-        this.out_int.list.add(line);
+        this.calc_int.list.add(line);
     }
 
     /**
@@ -246,14 +247,14 @@ public final class PipeLine {
                 (matcher.group(4) == null ? "" : matcher.group(4)) +
                 (matcher.group(5) == null ? "" : dropLeftNol(matcher.group(5))) : line;
 
-        this.out_flt.list.add(sb);
+        this.calc_flt.list.add(sb);
     }
 
     /**
      * Запись в файл строк
      * @param line - строка для записи
      */
-    private void addString(String line) { this.out_str.list.add(line); }
+    private void addString(String line) { this.calc_str.list.add(line); }
 
     /**
      * Отсечка старших нолей целой части
@@ -287,9 +288,27 @@ public final class PipeLine {
         return result.equals(".") ? ".0" : result;
     }
 
-    private record Outs(String alias, List<String> list) {
-        public Outs(String alias) {
-            this(alias, new ArrayList<>());
+//    private record Outs(String alias, List<String> list) {
+//        public Outs(String alias) {
+//            this(alias, new ArrayList<>());
+//        }
+//    }
+
+    private void show_statistic() {
+        for (Calc calc : List.of(calc_str, calc_int, calc_flt)) {
+            System.out.println(prefix + calc);
+            System.out.println("Итого строк: " + calc.list.size());
+            if (this.full && !calc.list.isEmpty()) {
+                calc.sort();
+                System.out.println("Минимум: " + calc.list.getFirst());
+                System.out.println("Максимум: " + calc.list.getLast());
+                String average = calc.average();
+                if (average != null)
+                    System.out.println("Среднее: " + average);
+                String sum = calc.sum();
+                if (sum != null)
+                    System.out.println("Сумма: " + sum);
+            }
         }
     }
 }

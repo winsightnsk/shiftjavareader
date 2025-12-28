@@ -2,12 +2,10 @@ package shiftreader;
 
 import org.junit.jupiter.api.Test;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -137,24 +135,89 @@ class PipeLineTest {
     }
     @Test
     public void testCalcInt() {
-        List<String> ls = new ArrayList<>(List.of("88888888888888888888", "0"));
-        assertEquals("8.888888888888889E19", CalcInt.sum(ls));
-        assertEquals("4.444444444444444E19", CalcInt.average(ls));
-        ls = new ArrayList<>(List.of("3", "4", "5"));
-        assertEquals("12", CalcInt.sum(ls));
-        assertEquals("4", CalcInt.average(ls));
-        ls = new ArrayList<>(List.of("100500", "500", "-100500", "+0000000000100400", "100400",
+        CalcInt testitem = new CalcInt("tester");
+        testitem.list.addAll(List.of("88888888888888888888", "0"));
+        assertEquals("8.888888888888889E19", testitem.sum());
+        assertEquals("4.444444444444444E19", testitem.average());
+        testitem.list.clear();
+        testitem.list.addAll(List.of("3", "4", "5"));
+        assertEquals("12", testitem.sum());
+        assertEquals("4.0", testitem.average());
+        testitem.list.clear();
+        testitem.list.addAll(List.of("100500", "500", "-100500", "+0000000000100400", "100400",
                 "999999999999999999999999999999999999999999999999999999999", "-100400", "-200"));
-        CalcInt.sort(ls);
-        assertEquals(8, ls.size());
-        assertEquals("-100500", ls.get(0));
-        assertEquals("-100400", ls.get(1));
-        assertEquals("-200", ls.get(2));
-        assertEquals("500", ls.get(3));
-        assertEquals("100400", ls.get(4));
-        assertEquals("+0000000000100400", ls.get(5));
-        assertEquals("100500", ls.get(6));
-        assertEquals("999999999999999999999999999999999999999999999999999999999", ls.get(7));
+        testitem.sort();
+        assertEquals(8, testitem.list.size());
+        assertEquals("-100500", testitem.list.get(0));
+        assertEquals("-100400", testitem.list.get(1));
+        assertEquals("-200", testitem.list.get(2));
+        assertEquals("500", testitem.list.get(3));
+        assertEquals("100400", testitem.list.get(4));
+        assertEquals("+0000000000100400", testitem.list.get(5));
+        assertEquals("100500", testitem.list.get(6));
+        assertEquals("999999999999999999999999999999999999999999999999999999999",
+                testitem.list.get(7));
+    }
+    @Test
+    public void testCalcFlt() {
+        CalcFlt c = new CalcFlt("tester");
+        c.list.addAll(List.of("3.333E100500", "1.111E100500"));
+        assertEquals("4.444E+100500", c.sum());
+        assertEquals("2.222E+100500", c.average());
+        c.list.clear();
+        c.list.addAll(List.of("3.333E100500", "1.111E100500", "-23423423.234234e-1"));
+        c.sort();
+        assertEquals("-2342342.3234234", c.list.getFirst());
+        assertEquals("3.333E+100500", c.list.getLast());
+    }
+    @Test
+    public void testStr() {
+        CalcStr c = new CalcStr("tester");
+        c.list.addAll(List.of("123", "sdfasdfasdfasd", ""));
+        c.sort();
+        assertEquals("", c.list.getFirst());
+        assertEquals("sdfasdfasdfasd", c.list.getLast());
+    }
+    @Test
+    public void testIn3() {
+        String[] args = {"-s", "-o" , "src/test/resources", "-p", "_nogit_in3_", "src/test/resources/in3.txt"};
+        PipeLine pl = new PipeLine(args);
+        assertEquals("_nogit_in3_", pl.getPrefix());
+        assertFalse(pl.isAppend());
+        assertEquals(1, pl.getFiles().size());
+        assertEquals(10, pl.strings_int().size());
+        assertEquals("0", pl.strings_int().get(0));
+        assertEquals("-0", pl.strings_int().get(1));
+        assertEquals("+0", pl.strings_int().get(2));
+        assertEquals("123", pl.strings_int().get(3));
+        assertEquals("-456", pl.strings_int().get(4));
+        assertEquals("+789", pl.strings_int().get(5));
+        assertEquals("1000000000000000000", pl.strings_int().get(6));
+        assertEquals("-9223372036854775808", pl.strings_int().get(7));
+        assertEquals("18446744073709551615", pl.strings_int().get(8));
+        assertEquals("999999999999999999999999999999999999999999999999", pl.strings_int().get(9));
+        assertEquals(10, pl.strings_flt().size());
+        assertEquals("0.0", pl.strings_flt().get(0));
+        assertEquals("0.0", pl.strings_flt().get(1));
+        assertEquals("0.0", pl.strings_flt().get(2));
+        assertEquals("3.141592653589793", pl.strings_flt().get(3));
+        assertEquals("-2.718281828459045", pl.strings_flt().get(4));
+        assertEquals("1.602176634E-19", pl.strings_flt().get(5));
+        assertEquals("-0.0000000000000000000000062607015E999999999", pl.strings_flt().get(6));
+        assertEquals("299792458.0", pl.strings_flt().get(7));
+        assertEquals("-273.15", pl.strings_flt().get(8));
+        assertEquals("1.7976931348623157E308", pl.strings_flt().get(9));
+        assertEquals(10, pl.strings_str().size());
+        assertEquals("Hello World!", pl.strings_str().get(0));
+        assertEquals("E123", pl.strings_str().get(1));
+        assertEquals("@Test", pl.strings_str().get(2));
+        assertEquals("123E", pl.strings_str().get(3));
+        assertEquals("3.14.15", pl.strings_str().get(4));
+        assertEquals("null", pl.strings_str().get(5));
+        assertEquals("\"quoted string\"", pl.strings_str().get(6));
+        assertEquals("Special chars: !@#$%^&*()", pl.strings_str().get(7));
+        assertEquals("Многострочная\\nстрока", pl.strings_str().get(8));
+        assertEquals("Последняя тестовая строка", pl.strings_str().get(9));
     }
 
 }

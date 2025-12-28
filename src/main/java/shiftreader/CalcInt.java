@@ -4,7 +4,13 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class CalcInt {
+public final class CalcInt extends Calc {
+    private String sumStr = null;
+
+    public CalcInt(String alias) {
+        super(alias);
+    }
+
     private static boolean less_left(String a, String b) {
         if (a.charAt(0) == '-' && b.charAt(0) != '-') return true;
         if (a.charAt(0) != '-' && b.charAt(0) == '-') return false;
@@ -23,7 +29,8 @@ public final class CalcInt {
         return a.compareTo(b) < 0;
     }
 
-    public static void sort(List<String> list) {
+    @Override
+    public void sort() {
         for (int i=0; i<list.size()-1; i++) {
             int mini = i;
             for (int j=i+1; j<list.size(); j++) if (less_left(list.get(j), list.get(mini))) mini = j;
@@ -35,16 +42,17 @@ public final class CalcInt {
         }
     }
 
-    public static String sum(List<String> list) {
+    @Override
+    public String sum() {
         try {
             long result = 0;
             for (String s : list) result += Long.parseLong(s);
-            return String.valueOf(result);
+            return sumStr = String.valueOf(result);
         } catch (Exception e) {
             try {
                 double result = 0;
                 for (String s : list) result += Double.parseDouble(s);
-                return String.valueOf(result);
+                return sumStr = String.valueOf(result);
             } catch (Exception ee) {
                 System.err.println(ee.toString());
                 return null;
@@ -52,12 +60,13 @@ public final class CalcInt {
         }
     }
 
-    public static String average(List<String> list) {
-        String sum_str = sum(list);
+    @Override
+    public String average() {
+        String sum_str = (sumStr == null) ? sum() : sumStr;
         if (sum_str == null) return null;
         try {
             long summa = Long.parseLong(sum_str);
-            return String.valueOf(summa / list.size());
+            return String.valueOf((double)summa / (double)list.size());
         } catch (Exception e) {
             try {
                 double summa = Double.parseDouble(sum_str);
